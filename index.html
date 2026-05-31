@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <title>Кубик Рубика — сборка</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #eef1f6;
+      color: #1a2238;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    canvas { display: block; }
+
+    /* ── верхняя панель действий ── */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 10px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: #ffffffe6;
+      border-bottom: 1px solid #d6dce8;
+      box-shadow: 0 1px 6px #1a223812;
+      z-index: 10;
+    }
+    .action {
+      padding: 9px 16px;
+      border: 1px solid #c4ccdb;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #f4f6fb;
+      color: #1a2238;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .action:hover:not(:disabled) { filter: brightness(0.96); }
+    .action:active:not(:disabled) { transform: scale(0.95); }
+    .action:disabled { opacity: 0.45; cursor: default; }
+    .action.primary { background: #009b48; border-color: #008a40; color: #fff; }
+    .action.solve   { background: #ef7d00; border-color: #d96f00; color: #fff; }
+    #status { font-size: 13px; color: #5a647a; margin-left: auto; }
+
+    #panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #ffffffe6;
+      border-top: 1px solid #d6dce8;
+      box-shadow: 0 -1px 6px #1a223812;
+      padding: 10px 16px 8px;
+      z-index: 10;
+    }
+    #panelhead {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 12px; color: #5a647a; margin-bottom: 6px;
+    }
+    #moveCount { font-weight: 700; color: #c47000; }
+    #solution {
+      font-family: 'Consolas', monospace;
+      font-size: 15px;
+      line-height: 1.8;
+      max-height: 84px;
+      overflow-y: auto;
+      letter-spacing: 0.5px;
+      color: #1a2238;
+    }
+    #solution .mv { padding: 1px 4px; border-radius: 4px; }
+    #solution .mv.cur { background: #009b48; color: #fff; }
+    #solution .dim { color: #9aa3b5; }
+
+    .move-group { display: flex; gap: 4px; }
+    #moves { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    #moves button {
+      width: 40px; height: 34px;
+      border: 1px solid #00000022; border-radius: 6px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    #moves button:hover:not(:disabled) { filter: brightness(1.08); }
+    #moves button:active:not(:disabled) { transform: scale(0.93); }
+    #moves button:disabled { opacity: 0.45; cursor: default; }
+    .btn-R { background: #cc0000; color: #fff; }
+    .btn-L { background: #ff6000; color: #fff; }
+    .btn-U { background: #ffffff; color: #111; border-color: #c4ccdb; }
+    .btn-D { background: #ffd500; color: #111; }
+    .btn-F { background: #009b48; color: #fff; }
+    .btn-B { background: #0045ad; color: #fff; }
+    .hint { font-size: 11px; color: #9aa3b5; align-self: center; }
+  </style>
+</head>
+<body>
+
+
+  <div id="topbar">
+    <button id="scrambleBtn" class="action">🔀 Перемешать</button>
+    <button id="solveBtn" class="action solve">🧠 Решить</button>
+    <button id="playBtn" class="action primary">▶ Собрать</button>
+    <button id="resetBtn" class="action">↺ Сброс</button>
+    <span id="status">—</span>
+  </div>
+
+  <div id="panel">
+    <div id="panelhead">
+      <span>Алгоритм сборки (нотация Сингмастера)</span>
+      <span id="moveCount"></span>
+    </div>
+    <div id="solution"><span class="dim">—</span></div>
+
+    <div id="moves">
+      <div class="move-group">
+        <button class="btn-R" data-move="R">R</button>
+        <button class="btn-R" data-move="R'">R'</button>
+      </div>
+      <div class="move-group">
+        <button class="btn-L" data-move="L">L</button>
+        <button class="btn-L" data-move="L'">L'</button>
+      </div>
+      <div class="move-group">
+        <button class="btn-U" data-move="U">U</button>
+        <button class="btn-U" data-move="U'">U'</button>
+      </div>
+      <div class="move-group">
+        <button class="btn-D" data-move="D">D</button>
+        <button class="btn-D" data-move="D'">D'</button>
+      </div>
+      <div class="move-group">
+        <button class="btn-F" data-move="F">F</button>
+        <button class="btn-F" data-move="F'">F'</button>
+      </div>
+      <div class="move-group">
+        <button class="btn-B" data-move="B">B</button>
+        <button class="btn-B" data-move="B'">B'</button>
+      </div>
+      <span class="hint">или клавиши R L U N(=D) F B, Shift — обратный ход</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
