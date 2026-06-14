@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from rubik import (
     solved, apply_move, apply_sequence, is_solved, scramble, MOVE_LABELS, APPJS,
 )
-from rubik.solver import solve
+from rubik.solver_optimal import solve_optimal
 
 # face index (1..6) -> цвет (как в app.js, по осям)
 FACE_COLOR = {1: "R", 2: "F", 3: "L", 4: "B", 5: "D", 6: "U"}  # +X,+Z,-X,-Z,-Y,+Y
@@ -108,7 +108,7 @@ def do_solve():
     """Возвращает алгоритм сборки для ТЕКУЩЕГО состояния (не мутирует состояние).
     Для каждого хода даётся и нотация, и тройка (axis, layer, dir) для анимации."""
     with _lock:
-        sol = solve(_state)
+        sol = solve_optimal(_state)
     return {
         "solution": sol,
         "length": len(sol),

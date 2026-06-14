@@ -25,6 +25,35 @@ from .pieces import (
 )
 from . import cycles as C
 
+
+def _check_invariants(state):
+    """Проверяет три инварианта группы кубика Рубика:
+    1. Чётность перестановок углов и рёбер совпадают
+    2. Сумма ориентаций углов делится на 3
+    3. Сумма ориентаций рёбер делится на 2
+    """
+    cp, co = read_corners(state)
+    ep, eo = read_edges(state)
+    
+    # Инвариант 1: чётность перестановок углов и рёбер
+    cp_perm = [0] + [c + 1 for c in cp]
+    ep_perm = [0] + [e + 1 for e in ep]
+    cp_parity = C.parity(cp_perm)
+    ep_parity = C.parity(ep_perm)
+    
+    if cp_parity != ep_parity:
+        return False, "Чётность перестановок не совпадает"
+    
+    # Инвариант 2: сумма ориентаций углов ≡ 0 (mod 3)
+    if sum(co) % 3 != 0:
+        return False, "Сумма ориентаций углов не делится на 3"
+    
+    # Инвариант 3: сумма ориентаций рёбер ≡ 0 (mod 2)
+    if sum(eo) % 2 != 0:
+        return False, "Сумма ориентаций рёбер не делится на 2"
+    
+    return True, "Инварианты OK"
+
 # ── Базовые чистые примитивы (найдены коммутаторным перебором, см. find_primitives.py) ──
 PRIM = {
     'c3': "R F R' B2 R F' R' B2".split(),
@@ -95,7 +124,8 @@ def _build():
             # важно лишь покрыть все 3-циклы деталей
             key_perm = tuple(perm)
             if key_perm not in macros or len(moves) < len(macros[key_perm][0]):
-                macros[key_perm] = (moves, perm)
+                # Сохраняем: (moves, perm) где perm это как применяется макро к пермутации
+                macros[key_perm] = (moves, list(perm))
         lib[key] = list(macros.values())
 
     # — ориентационные макросы: сопряжение ct / ef (примитив + инверсия) —
@@ -154,18 +184,41 @@ class _Run:
 
 
 def solve(state):
-    """Возвращает список ходов, собирающих куб из позиции state."""
+    """Возвращает список ходов, собирающих куб из позиции state.
+    
+    Алгоритм следует методичке 2.4:
+      Этап 0. Выравнивание чётности (если перестановка нечётная)
+      Этап 1. Перестановка углов (3-циклы коммутатором c3)
+      Этап 2. Перестановка рёбер (3-циклы коммутатором e3)
+      Этап 3. Ориентация углов (примитивом ct)
+      Этап 4. Ориентация рёбер (примитивом ef)
+    """
+    # Проверяем инварианты
+    valid, msg = _check_invariants(state)
+    if not valid:
+        raise ValueError(f"Невалидное состояние куба: {msg}")
+    
     r = _Run(state)
 
-    # 0) выравнивание чётности: 3-циклы чётны, перестановка должна быть чётной
+    # Этап 0: выравнивание чётности
+    # По методичке: если sgn(σc) = -1 (нечетная), применяется четвертной поворот U.
+    # Четвёртый оборот является 4-циклом, что меняет чётность обеих подсистем.
+    # Это преобразует любую комбинацию 4-циклов в комбинацию, разрешимую методом 3-циклов.
     cp, _ = read_corners(r.st)
     if C.parity([0] + [c + 1 for c in cp]) == 1:
         r.do(['U'])
 
-    _solve_perm(r, read_corners, _LIB['corner3'], N_CORNERS)   # 1) углы: позиции
-    _solve_perm(r, read_edges,   _LIB['edge3'],   N_EDGES)     # 2) рёбра: позиции
-    _solve_orient(r, read_corners, _LIB['twist'], 3)           # 3) углы: ориентация
-    _solve_orient(r, read_edges,   _LIB['flip'],  2)           # 4) рёбра: ориентация
+    # Этап 1: Перестановка углов
+    _solve_perm(r, read_corners, _LIB['corner3'], N_CORNERS)
+    
+    # Этап 2: Перестановка рёбер
+    _solve_perm(r, read_edges,   _LIB['edge3'],   N_EDGES)
+    
+    # Этап 3: Ориентация углов
+    _solve_orient(r, read_corners, _LIB['twist'], 3)
+    
+    # Этап 4: Ориентация рёбер
+    _solve_orient(r, read_edges,   _LIB['flip'],  2)
 
     assert pieces_solved(apply_sequence(list(state), r.sol)), "решение неверно!"
     return _compress(r.sol)
@@ -179,7 +232,9 @@ def _solve_perm(r, read, macros, n):
             return
         best = None
         for moves, M in macros:
-            nm = sum(perm[M[s]] != s for s in range(n))
+            # Применяем пермутацию M к текущей перестановке: new_perm[s] = perm[M[s]]
+            new_perm = [perm[M[s]] if M[s] < n else 0 for s in range(n)]
+            nm = sum(new_perm[s] != s for s in range(n))
             gain = mis - nm
             if best is None or gain > best[0] or (gain == best[0] and len(moves) < len(best[1])):
                 best = (gain, moves)
@@ -190,12 +245,13 @@ def _solve_perm(r, read, macros, n):
 
 def _solve_orient(r, read, macros, mod):
     for _ in range(48):
-        ori = read(r.st)[1]
+        perm, ori = read(r.st)
         cnt = sum(o != 0 for o in ori)
         if cnt == 0:
             return
         best = None
         for moves, delta in macros:
+            # delta[s] это изменение ориентации в слоте s (не меняет перестановку)
             new = [(ori[s] + delta[s]) % mod for s in range(len(ori))]
             score = (sum(o != 0 for o in new), sum(new))
             if best is None or score < best[0] or (score == best[0] and len(moves) < len(best[1])):
