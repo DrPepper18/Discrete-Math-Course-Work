@@ -6,16 +6,6 @@ from .geometry import inverse_label
 
 
 def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
-    """Двусторонний BFS для оптимальных решений.
-    
-    Параметры:
-      state — начальное состояние
-      max_depth — максимальная глубина поиска
-      timeout — максимальное время в секундах
-    
-    Возвращает:
-      (solution, depth) или (None, None)
-    """
     if pieces_solved(state):
         return [], 0
     
@@ -23,11 +13,9 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
     target = tuple(solved())
     state_tuple = tuple(state)
     
-    # Прямой BFS
     forward = {state_tuple: ([], 0)}
     curr_level_f = {state_tuple}
     
-    # Обратный BFS
     backward = {target: ([], 0)}
     curr_level_b = {target}
     
@@ -40,7 +28,7 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
         if verbose and depth % 2 == 0:
             print(f"  BFS depth {depth}: |F|={len(forward)}, |B|={len(backward)}")
         
-        # Расширяем прямой поиск
+        # Расширяем меньший слой для экономии памяти
         if len(curr_level_f) <= len(curr_level_b) and curr_level_f:
             next_level = set()
             for state_t in curr_level_f:
@@ -52,6 +40,7 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
                     
                     if next_state in backward:
                         moves_b, _ = backward[next_state]
+                        # Соединяем: путь вперед + текущий ход + инвертированный путь назад
                         solution = moves_f + [move] + invert_sequence(moves_b)
                         if verbose:
                             print(f"  ✓ Optimal solution found: {len(solution)} moves")
@@ -64,7 +53,6 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
             curr_level_f = next_level
             depth += 1
         
-        # Расширяем обратный поиск
         elif curr_level_b:
             next_level = set()
             for state_t in curr_level_b:
@@ -77,7 +65,8 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
                     
                     if next_state in forward:
                         moves_f, _ = forward[next_state]
-                        solution = moves_f + invert_sequence(moves_b + [inv_move])
+                        # Корректный стык при обратном поиске
+                        solution = moves_f + [move] + invert_sequence(moves_b)
                         if verbose:
                             print(f"  ✓ Optimal solution found: {len(solution)} moves")
                         return solution, len(solution)
@@ -90,7 +79,7 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
             depth += 1
         else:
             break
-    
+            
     return None, None
 
 
