@@ -271,7 +271,7 @@ Discrete-Math-Course-Work/
 
 ---
 
-## Запуск
+## Запуск программы
 
 ```bash
 cd backend
@@ -284,3 +284,10 @@ python -m uvicorn app:app --port 8000
 `R L U N(=D) F B` (Shift — обратный ход).
 
 ---
+
+## Запуск тестов и исследовательских скриптов
+*На примере tests/test_solver.py*
+```bash
+pip install -e .
+python tests/test_solver.py
+```
