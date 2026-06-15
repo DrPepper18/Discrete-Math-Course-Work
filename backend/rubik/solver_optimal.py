@@ -43,7 +43,7 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
                         # Соединяем: путь вперед + текущий ход + инвертированный путь назад
                         solution = moves_f + [move] + invert_sequence(moves_b)
                         if verbose:
-                            print(f"  ✓ Optimal solution found: {len(solution)} moves")
+                            print(f"  [V] Optimal solution found: {len(solution)} moves")
                         return solution, len(solution)
                     
                     if next_state not in forward:
@@ -68,7 +68,7 @@ def solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=False):
                         # Корректный стык при обратном поиске
                         solution = moves_f + [move] + invert_sequence(moves_b)
                         if verbose:
-                            print(f"  ✓ Optimal solution found: {len(solution)} moves")
+                            print(f"  [V] Optimal solution found: {len(solution)} moves")
                         return solution, len(solution)
                     
                     if next_state not in backward:
@@ -92,7 +92,7 @@ def solve_optimal(state, verbose=False):
     
     if solution is not None:
         if verbose:
-            print(f"✓ BFS found optimal solution: {len(solution)} moves")
+            print(f"[V] BFS found optimal solution: {len(solution)} moves")
         return solution
     
     if verbose:

@@ -57,14 +57,14 @@ def test_solve_simple_scrambles(debug=False):
             print(f"Решение найдено: {' '.join(solution[:20])}{'...' if len(solution) > 20 else ''}")
             print(f"Длина решения: {len(solution)} ходов")
             print(f"Куб собран после решения: {is_solved(final_state)}")
-            print(f"✓ УСПЕШНО")
+            print(f"[V] УСПЕШНО")
             
             if not is_solved(final_state):
-                print(f"✗ ОШИБКА: куб не собран после решения!")
+                print(f"[X] ОШИБКА: куб не собран после решения!")
                 return False
                 
         except Exception as e:
-            print(f"✗ ОШИБКА: {e}")
+            print(f"[X] ОШИБКА: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -81,7 +81,7 @@ def test_invariants():
     valid, msg = _check_invariants(state)
     print(f"Собранный куб: {msg}")
     if not valid:
-        print("✗ ОШИБКА: инварианты не выполнены на собранном кубе!")
+        print("[X] ОШИБКА: инварианты не выполнены на собранном кубе!")
         return False
     
     # Тест на скрэмбленном кубе
@@ -89,10 +89,10 @@ def test_invariants():
     valid, msg = _check_invariants(state)
     print(f"Скрэмбленный куб: {msg}")
     if not valid:
-        print(f"✗ ОШИБКА: инварианты не выполнены на скрэмбленном кубе! ({msg})")
+        print(f"[X] ОШИБКА: инварианты не выполнены на скрэмбленном кубе! ({msg})")
         return False
     
-    print(f"✓ УСПЕШНО")
+    print(f"[V] УСПЕШНО")
     return True
 
 if __name__ == "__main__":
@@ -101,13 +101,13 @@ if __name__ == "__main__":
     
     # Проверяем инварианты
     if not test_invariants():
-        print("\n✗ Тесты не пройдены")
+        print("\n[X] Тесты не пройдены")
         exit(1)
     
     # Тестируем решение
     if not test_solve_simple_scrambles(debug=True):
-        print("\n✗ Тесты не пройдены")
+        print("\n[X] Тесты не пройдены")
         exit(1)
     
     print("\n" + "=" * 60)
-    print("✓ ВСЕ ТЕСТЫ ПРОЙДЕНЫ")
+    print("[V] ВСЕ ТЕСТЫ ПРОЙДЕНЫ")

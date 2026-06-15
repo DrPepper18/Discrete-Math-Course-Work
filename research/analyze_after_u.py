@@ -37,7 +37,7 @@ from backend.rubik.solver import solve
 print("Решаем куб R + U:")
 try:
     solution = solve(apply_sequence(solved(), ["R"]))
-    print(f"✓ Решено в {len(solution)} ходов")
+    print(f"[V] Решено в {len(solution)} ходов")
     print(f"  Первые 30: {' '.join(solution[:30])}")
 except Exception as e:
-    print(f"✗ Ошибка: {e}")
+    print(f"[X] Ошибка: {e}")

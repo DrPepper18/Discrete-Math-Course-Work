@@ -45,7 +45,7 @@ for name, scramble_moves in test_cases:
         print(f"  Коммутаторный: {len_comm:3d} ходов")
         print(f"  Оптимальный:   {len_opt:3d} ходов (улучшение в {ratio:.1f}x)")
     elif len_opt is not None:
-        print(f"  Оптимальный:   {len_opt:3d} ходов ✓")
+        print(f"  Оптимальный:   {len_opt:3d} ходов [V]")
     elif len_comm is not None:
         print(f"  Коммутаторный: {len_comm:3d} ходов (оптимальный не работал)")
 

@@ -18,17 +18,17 @@ print("Попытка двустороннего BFS (max 8 ходов, timeout 
 solution, depth = solve_bfs_limited(state, max_depth=8, timeout=5.0, verbose=True)
 
 if solution:
-    print(f"\n✓ BFS найдено оптимальное решение: {len(solution)} ходов")
+    print(f"\n[V] BFS найдено оптимальное решение: {len(solution)} ходов")
     print(f"  Решение: {' '.join(solution)}")
 else:
-    print(f"\n✗ BFS не нашло за отведённое время")
+    print(f"\n[X] BFS не нашло за отведённое время")
     
 print()
 
 # Теперь пробуем оптимальный решатель
 print("Полный оптимальный решатель:")
 solution = solve_optimal(state, verbose=True)
-print(f"\n✓ Найдено решение: {len(solution)} ходов")
+print(f"\n[V] Найдено решение: {len(solution)} ходов")
 print(f"  Первые 10 ходов: {' '.join(solution[:10])}")
 if len(solution) > 10:
     print(f"  ... ({len(solution) - 10} ещё)")
